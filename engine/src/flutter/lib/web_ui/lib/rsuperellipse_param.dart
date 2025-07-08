@@ -7,6 +7,39 @@ part of ui;
 // The logic in this file mirrors the implementation in
 // `round_superellipse_param.cc`, which has detailed comments.
 
+// A helper class for composing affine transformations.
+//
+// This is used to build and combine transforms because `dart:ui` does not
+// provide a direct API for matrix composition.
+extension type _Transform(Offset Function(Offset) apply) {
+  static _Transform makeComposite(_Transform second, _Transform first) {
+    return _Transform((Offset p) => second.apply(first.apply(p)));
+  }
+
+  static _Transform makeTranslate(Offset offset) {
+    return _Transform((Offset p) => Offset(p.dx + offset.dx, p.dy + offset.dy));
+  }
+
+  static _Transform makeScale(Offset scale) {
+    return _Transform((Offset p) => Offset(p.dx * scale.dx, p.dy * scale.dy));
+  }
+
+  static final _Transform kFlip = _Transform((Offset p) {
+    return Offset(p.dy, p.dx);
+  });
+}
+
+// The Path class extended with a few utility methods.
+extension type _RSuperellipsePath(Path path) {
+  void cubicToPoints(Offset p2, Offset p3, Offset p4) {
+    path.cubicTo(p2.dx, p2.dy, p3.dx, p3.dy, p4.dx, p4.dy);
+  }
+
+  void lineToPoint(Offset p) {
+    path.lineTo(p.dx, p.dy);
+  }
+}
+
 // An octant of an RSuperellipse, used in _RSuperellipseQuadrant.
 class _RSuperellipseOctant {
   factory _RSuperellipseOctant(Offset center, double a, double radius) {
@@ -72,7 +105,7 @@ class _RSuperellipseOctant {
   final Offset circleCenter;
   final double circleMaxAngle;
 
-  void addToPath(_RSuperellipsePath path, bool reverse, bool flip, _Transform externalTransform) {
+  void addToPath(_RSuperellipsePath path, _Transform externalTransform, {required bool reverse, required bool flip}) {
     _Transform transform = _Transform.makeComposite(
       externalTransform,
       _Transform.makeTranslate(offset),
@@ -300,7 +333,7 @@ class _RSuperellipseQuadrant {
 
   void addToPath(
     _RSuperellipsePath path, {
-    required bool reversed,
+    required bool reverse,
     Size extraScale = const Size(1, 1),
   }) {
     final _Transform transform = _Transform.makeComposite(
@@ -308,7 +341,7 @@ class _RSuperellipseQuadrant {
       _Transform.makeScale(signedScale.scale(extraScale.width, extraScale.height)),
     );
     if (top.se_n < 2 || right.se_n < 2) {
-      if (!reversed) {
+      if (!reverse) {
         final _Transform transformOctant = _Transform.makeComposite(
           transform,
           _Transform.makeTranslate(right.offset),
@@ -325,50 +358,17 @@ class _RSuperellipseQuadrant {
       }
       return;
     }
-    if (!reversed) {
-      top.addToPath(path, false, false, transform);
-      right.addToPath(path, true, true, transform);
+    if (!reverse) {
+      top.addToPath(path, transform, reverse: false, flip: false);
+      right.addToPath(path, transform, reverse: true, flip: true);
     } else {
-      right.addToPath(path, false, true, transform);
-      top.addToPath(path, true, false, transform);
+      right.addToPath(path, transform, reverse: false, flip: true);
+      top.addToPath(path, transform, reverse: true, flip: false);
     }
   }
 
   static Offset _replaceNaNWith(Offset p, Size sign) {
     return Offset(p.dx.isFinite ? p.dx : sign.width, p.dy.isFinite ? p.dy : sign.height);
-  }
-}
-
-// A helper class for composing affine transformations.
-//
-// This is used to build and combine transforms because `dart:ui` does not
-// provide a direct API for matrix composition.
-extension type _Transform(Offset Function(Offset) apply) {
-  static _Transform makeComposite(_Transform second, _Transform first) {
-    return _Transform((Offset p) => second.apply(first.apply(p)));
-  }
-
-  static _Transform makeTranslate(Offset offset) {
-    return _Transform((Offset p) => Offset(p.dx + offset.dx, p.dy + offset.dy));
-  }
-
-  static _Transform makeScale(Offset scale) {
-    return _Transform((Offset p) => Offset(p.dx * scale.dx, p.dy * scale.dy));
-  }
-
-  static final _Transform kFlip = _Transform((Offset p) {
-    return Offset(p.dy, p.dx);
-  });
-}
-
-// The Path class extended with a few utility methods.
-extension type _RSuperellipsePath(Path path) {
-  void cubicToPoints(Offset p2, Offset p3, Offset p4) {
-    path.cubicTo(p2.dx, p2.dy, p3.dx, p3.dy, p4.dx, p4.dy);
-  }
-
-  void lineToPoint(Offset p) {
-    path.lineTo(p.dx, p.dy);
   }
 }
 
@@ -390,10 +390,10 @@ class _RSuperellipsePathBuilder {
     );
     final Offset start = Offset(0, height / 2);
     path.moveTo(start.dx, start.dy);
-    bottomRight.addToPath(p, reversed: false, extraScale: const Size(1, 1));
-    bottomRight.addToPath(p, reversed: true, extraScale: const Size(1, -1));
-    bottomRight.addToPath(p, reversed: false, extraScale: const Size(-1, -1));
-    bottomRight.addToPath(p, reversed: true, extraScale: const Size(-1, 1));
+    bottomRight.addToPath(p, reverse: false, extraScale: const Size(1, 1));
+    bottomRight.addToPath(p, reverse: true, extraScale: const Size(1, -1));
+    bottomRight.addToPath(p, reverse: false, extraScale: const Size(-1, -1));
+    bottomRight.addToPath(p, reverse: true, extraScale: const Size(-1, 1));
     path.lineTo(start.dx, start.dy);
     path.close();
   }
@@ -413,25 +413,25 @@ class _RSuperellipsePathBuilder {
       Offset(r.right, r.top),
       r.trRadius,
       const Size(1, -1),
-    ).addToPath(p, reversed: false);
+    ).addToPath(p, reverse: false);
     _RSuperellipseQuadrant(
       Offset(bottomSplit, rightSplit),
       Offset(r.right, r.bottom),
       r.brRadius,
       const Size(1, 1),
-    ).addToPath(p, reversed: true);
+    ).addToPath(p, reverse: true);
     _RSuperellipseQuadrant(
       Offset(bottomSplit, leftSplit),
       Offset(r.left, r.bottom),
       r.blRadius,
       const Size(-1, 1),
-    ).addToPath(p, reversed: false);
+    ).addToPath(p, reverse: false);
     _RSuperellipseQuadrant(
       Offset(topSplit, leftSplit),
       Offset(r.left, r.top),
       r.tlRadius,
       const Size(-1, -1),
-    ).addToPath(p, reversed: true);
+    ).addToPath(p, reverse: true);
 
     path.lineTo(start.dx, start.dy);
     path.close();
@@ -447,12 +447,13 @@ class _RSuperellipsePathBuilder {
   }
 }
 
-/// The cache key, composed of width, height, and radius.
-///
-/// To handle floating-point precision issues and make it usable as a Map key,
-/// we multiply each float by 10 and round it to an integer.
-class _CacheKey {
-  _CacheKey(double width, double height, double radiusX, double radiusY)
+// The cache key for a `RSuperellipse` with uniform radii to be used in
+// `_RSuperellipseCache`.
+//
+// To handle floating-point precision issues and make it usable as a Map key,
+// we multiply each float by 10 and round it to an integer.
+class _RSuperellipseCacheKey {
+  _RSuperellipseCacheKey(double width, double height, double radiusX, double radiusY)
     : _widthInt = (width * kPrecisionFactor).round(),
       _heightInt = (height * kPrecisionFactor).round(),
       _radiusXInt = (radiusX * kPrecisionFactor).round(),
@@ -471,7 +472,7 @@ class _CacheKey {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is _CacheKey &&
+    return other is _RSuperellipseCacheKey &&
         _widthInt == other._widthInt &&
         _heightInt == other._heightInt &&
         _radiusXInt == other._radiusXInt &&
@@ -483,7 +484,7 @@ class _CacheKey {
 
   @override
   String toString() {
-    return '_CacheKey('
+    return '_RSuperellipseCacheKey('
         'width: ${_widthInt / kPrecisionFactor},'
         'height: ${_heightInt / kPrecisionFactor},'
         'radiusX: ${_radiusXInt / kPrecisionFactor},'
@@ -502,10 +503,7 @@ class _RSuperellipseCache {
 
   static late final _RSuperellipseCache instance = _RSuperellipseCache._(capacity: kCapacity);
 
-  // The internal cache storage. A [LinkedHashMap] maintains insertion order,
-  // allowing us to treat the first entry as the least recently used and
-  // the last entry as the most recently used.
-  final Map<_CacheKey, Path> _cache = <_CacheKey, Path>{};
+  final Map<_RSuperellipseCacheKey, Path> _cache = <_RSuperellipseCacheKey, Path>{};
 
   _RSuperellipseCache._({required this.capacity}) : assert(capacity > 0);
 
@@ -516,7 +514,7 @@ class _RSuperellipseCache {
   /// If the path is found, it is moved to the most-recently-used position.
   /// Otherwise, a new path is built and inserted.
   Path get(double width, double height, Radius radius) {
-    final key = _CacheKey(width, height, radius.x, radius.y);
+    final key = _RSuperellipseCacheKey(width, height, radius.x, radius.y);
 
     // Remove the key and re-insert it to mark it as most recently used.
     final Path? path = _cache.remove(key);
@@ -531,7 +529,7 @@ class _RSuperellipseCache {
     }
   }
 
-  Path _buildPath(_CacheKey key) {
+  Path _buildPath(_RSuperellipseCacheKey key) {
     return _RSuperellipsePathBuilder.normalized(
       key.width,
       key.height,
