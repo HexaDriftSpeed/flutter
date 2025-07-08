@@ -72,6 +72,123 @@ class _RSuperellipseOctant {
     );
   }
 
+  void addToPath(_RSuperellipsePath path, bool reverse, bool flip, _Transform externalTransform) {
+    _Transform transform = _Transform.makeComposite(
+      externalTransform,
+      _Transform.makeTranslate(offset),
+    );
+    if (flip) {
+      transform = _Transform.makeComposite(transform, _Transform.kFlip);
+    }
+
+    final List<Offset> circlePoints = _circularArcPoints();
+    final List<Offset> sePoints = _superellipseArcPoints();
+
+    if (!reverse) {
+      path.cubicToPoints(
+        transform.apply(sePoints[1]),
+        transform.apply(sePoints[2]),
+        transform.apply(sePoints[3]),
+      );
+      path.cubicToPoints(
+        transform.apply(circlePoints[1]),
+        transform.apply(circlePoints[2]),
+        transform.apply(circlePoints[3]),
+      );
+    } else {
+      path.cubicToPoints(
+        transform.apply(circlePoints[2]),
+        transform.apply(circlePoints[1]),
+        transform.apply(circlePoints[0]),
+      );
+      path.cubicToPoints(
+        transform.apply(sePoints[2]),
+        transform.apply(sePoints[1]),
+        transform.apply(sePoints[0]),
+      );
+    }
+  }
+
+  List<Offset> _superellipseArcPoints() {
+    final Offset start = Offset(0, se_a);
+    final Offset end = circleStart;
+    final Offset startTangent = Offset(1, 0);
+    final Offset circleStartVector = circleStart - circleCenter;
+    final Offset endTangent =
+        Offset(-circleStartVector.dy, circleStartVector.dx) / circleStartVector.distance;
+
+    final (double startFactor, double endFactor) = _superellipseBezierFactors(se_n);
+    return <Offset>[
+      start,
+      start + startTangent * startFactor * se_a,
+      end + endTangent * endFactor * se_a,
+      end,
+    ];
+  }
+
+  List<Offset> _circularArcPoints() {
+    final Offset startVector = circleStart - circleCenter;
+    final Offset endVector = _rotate(startVector, -circleMaxAngle);
+    final Offset circleEnd = circleCenter + endVector;
+    final Offset startTangent = Offset(startVector.dy, -startVector.dx) / startVector.distance;
+    final Offset endTangent = Offset(-endVector.dy, endVector.dx) / endVector.distance;
+    final double bezierFactor = math.tan(circleMaxAngle / 4) * 4 / 3;
+    final double radius = startVector.distance;
+
+    return <Offset>[
+      circleStart,
+      circleStart + startTangent * bezierFactor * radius,
+      circleEnd + endTangent * bezierFactor * radius,
+      circleEnd,
+    ];
+  }
+
+  static Offset _rotate(Offset p, double radians) {
+    final double cos_a = math.cos(radians);
+    final double sin_a = math.sin(radians);
+    return Offset(p.dx * cos_a - p.dy * sin_a, p.dx * sin_a + p.dy * cos_a);
+  }
+
+  static (double, double) _superellipseBezierFactors(double n) {
+    const List<(double, double)> kPrecomputedVariables = [
+      /*n= 2.0*/ (0.01339448, 0.05994973),
+      /*n= 3.0*/ (0.13664115, 0.13592082),
+      /*n= 4.0*/ (0.24545546, 0.14099516),
+      /*n= 5.0*/ (0.32353151, 0.12808021),
+      /*n= 6.0*/ (0.39093068, 0.11726264),
+      /*n= 7.0*/ (0.44847800, 0.10808278),
+      /*n= 8.0*/ (0.49817452, 0.10026175),
+      /*n= 9.0*/ (0.54105583, 0.09344429),
+      /*n=10.0*/ (0.57812578, 0.08748984),
+      /*n=11.0*/ (0.61050961, 0.08224722),
+      /*n=12.0*/ (0.63903989, 0.07759639),
+      /*n=13.0*/ (0.66416338, 0.07346530),
+      /*n=14.0*/ (0.68675338, 0.06974996),
+      /*n=15.0*/ (0.70678034, 0.06529512),
+    ];
+    final int kNumRecords = kPrecomputedVariables.length;
+    const double kStep = 1.00;
+    const double kMinN = 2.00;
+    final double kMaxN = kMinN + (kNumRecords - 1) * kStep;
+
+    if (n >= kMaxN) {
+      return (
+        1.07 - math.exp(1.307649835) * math.pow(n, -0.8568516731),
+        -0.01 + math.exp(-0.9287690322) * math.pow(n, -0.6120901398),
+      );
+    }
+
+    double steps = (n - kMinN) / kStep;
+    steps = steps.clamp(0, kNumRecords - 1);
+    final int left = (steps).floor().clamp(0, kNumRecords - 2).toInt();
+    final double frac = steps - left;
+
+    return (
+      (1 - frac) * kPrecomputedVariables[left].$1 + frac * kPrecomputedVariables[left + 1].$1,
+      (1 - frac) * kPrecomputedVariables[left].$2 + frac * kPrecomputedVariables[left + 1].$2,
+    );
+  }
+
   static Offset _findCircleCenter(Offset a, Offset b, double r) {
     final Offset aToB = b - a;
     final Offset m = (a + b) / 2;
@@ -205,6 +322,38 @@ class _RSuperellipseQuadrant {
     );
   }
 
+  void addToPath(_RSuperellipsePath path, bool reverse, [Offset scaleSign = const Offset(1, 1)]) {
+    final _Transform transform = _Transform.makeComposite(
+      _Transform.makeTranslate(offset),
+      _Transform.makeScale(scaleSign.scale(signedScale.width, signedScale.height)),
+    );
+    if (top.se_n < 2 || right.se_n < 2) {
+      if (!reverse) {
+        final _Transform transformOctant = _Transform.makeComposite(
+          transform,
+          _Transform.makeTranslate(right.offset),
+        );
+        path.lineToPoint(transformOctant.apply(Offset(right.se_a, right.se_a)));
+        path.lineToPoint(transformOctant.apply(Offset(right.se_a, 0)));
+      } else {
+        final _Transform transformOctant = _Transform.makeComposite(
+          transform,
+          _Transform.makeTranslate(top.offset),
+        );
+        path.lineToPoint(transformOctant.apply(Offset(top.se_a, top.se_a)));
+        path.lineToPoint(transformOctant.apply(Offset(0, top.se_a)));
+      }
+      return;
+    }
+    if (!reverse) {
+      top.addToPath(path, false, false, transform);
+      right.addToPath(path, true, true, transform);
+    } else {
+      right.addToPath(path, false, true, transform);
+      top.addToPath(path, true, false, transform);
+    }
+  }
+
   static const _RSuperellipseQuadrant zero = _RSuperellipseQuadrant(
     offset: Offset.zero,
     signedScale: const Size(1, 1),
@@ -243,6 +392,16 @@ extension type _Transform(Offset Function(Offset) apply) {
   });
 }
 
+extension type _RSuperellipsePath(Path path) {
+  void cubicToPoints(Offset p2, Offset p3, Offset p4) {
+    path.cubicTo(p2.dx, p2.dy, p3.dx, p3.dy, p4.dx, p4.dy);
+  }
+
+  void lineToPoint(Offset p) {
+    path.lineTo(p.dx, p.dy);
+  }
+}
+
 // A class that can build a path for a `RSuperellipse`.
 //
 // Used in `_RSuperellipsePathCache`.
@@ -252,6 +411,7 @@ class _RSuperellipsePathBuilder {
   // must also have a uniform radius.
   _RSuperellipsePathBuilder.normalized(double width, double height, double radiusX, double radiusY)
     : path = Path() {
+    final _RSuperellipsePath p = _RSuperellipsePath(path);
     final _RSuperellipseQuadrant bottomRight = _RSuperellipseQuadrant.computeQuadrant(
       Offset.zero,
       Offset(width / 2, height / 2),
@@ -260,16 +420,17 @@ class _RSuperellipsePathBuilder {
     );
     final Offset start = Offset(0, height / 2);
     path.moveTo(start.dx, start.dy);
-    _addQuadrant(bottomRight, false, const Offset(1, 1));
-    _addQuadrant(bottomRight, true, const Offset(1, -1));
-    _addQuadrant(bottomRight, false, const Offset(-1, -1));
-    _addQuadrant(bottomRight, true, const Offset(-1, 1));
+    bottomRight.addToPath(p, false, const Offset(1, 1));
+    bottomRight.addToPath(p, true, const Offset(1, -1));
+    bottomRight.addToPath(p, false, const Offset(-1, -1));
+    bottomRight.addToPath(p, true, const Offset(-1, 1));
     path.lineTo(start.dx, start.dy);
     path.close();
   }
 
   // Build a path for an RSuperellipse with arbitrary position and radii.
   _RSuperellipsePathBuilder.exact(RSuperellipse r) : path = Path() {
+    final _RSuperellipsePath p = _RSuperellipsePath(path);
     final Offset start = Offset((r.left + r.right) / 2, r.top);
     path.moveTo(start.dx, start.dy);
 
@@ -277,42 +438,30 @@ class _RSuperellipsePathBuilder {
     final double rightSplit = _split(r.top, r.bottom, r.trRadiusY, r.brRadiusY);
     final double bottomSplit = _split(r.left, r.right, r.blRadiusX, r.brRadiusX);
     final double leftSplit = _split(r.top, r.bottom, r.tlRadiusY, r.blRadiusY);
-    _addQuadrant(
-      _RSuperellipseQuadrant.computeQuadrant(
-        Offset(topSplit, rightSplit),
-        Offset(r.right, r.top),
-        r.trRadius,
-        const Size(1, -1),
-      ),
-      false,
-    );
-    _addQuadrant(
-      _RSuperellipseQuadrant.computeQuadrant(
-        Offset(bottomSplit, rightSplit),
-        Offset(r.right, r.bottom),
-        r.brRadius,
-        const Size(1, 1),
-      ),
-      true,
-    );
-    _addQuadrant(
-      _RSuperellipseQuadrant.computeQuadrant(
-        Offset(bottomSplit, leftSplit),
-        Offset(r.left, r.bottom),
-        r.blRadius,
-        const Size(-1, 1),
-      ),
-      false,
-    );
-    _addQuadrant(
-      _RSuperellipseQuadrant.computeQuadrant(
-        Offset(topSplit, leftSplit),
-        Offset(r.left, r.top),
-        r.tlRadius,
-        const Size(-1, -1),
-      ),
-      true,
-    );
+    _RSuperellipseQuadrant.computeQuadrant(
+      Offset(topSplit, rightSplit),
+      Offset(r.right, r.top),
+      r.trRadius,
+      const Size(1, -1),
+    ).addToPath(p, false);
+    _RSuperellipseQuadrant.computeQuadrant(
+      Offset(bottomSplit, rightSplit),
+      Offset(r.right, r.bottom),
+      r.brRadius,
+      const Size(1, 1),
+    ).addToPath(p, true);
+    _RSuperellipseQuadrant.computeQuadrant(
+      Offset(bottomSplit, leftSplit),
+      Offset(r.left, r.bottom),
+      r.blRadius,
+      const Size(-1, 1),
+    ).addToPath(p, false);
+    _RSuperellipseQuadrant.computeQuadrant(
+      Offset(topSplit, leftSplit),
+      Offset(r.left, r.top),
+      r.tlRadius,
+      const Size(-1, -1),
+    ).addToPath(p, true);
 
     path.lineTo(start.dx, start.dy);
     path.close();
@@ -320,177 +469,11 @@ class _RSuperellipsePathBuilder {
 
   final Path path;
 
-  void _addQuadrant(
-    _RSuperellipseQuadrant param,
-    bool reverse, [
-    Offset scaleSign = const Offset(1, 1),
-  ]) {
-    final _Transform transform = _Transform.makeComposite(
-      _Transform.makeTranslate(param.offset),
-      _Transform.makeScale(scaleSign.scale(param.signedScale.width, param.signedScale.height)),
-    );
-    if (param.top.se_n < 2 || param.right.se_n < 2) {
-      if (!reverse) {
-        final _Transform transformOctant = _Transform.makeComposite(
-          transform,
-          _Transform.makeTranslate(param.right.offset),
-        );
-        _lineTo(transformOctant.apply(Offset(param.right.se_a, param.right.se_a)));
-        _lineTo(transformOctant.apply(Offset(param.right.se_a, 0)));
-      } else {
-        final _Transform transformOctant = _Transform.makeComposite(
-          transform,
-          _Transform.makeTranslate(param.top.offset),
-        );
-        _lineTo(transformOctant.apply(Offset(param.top.se_a, param.top.se_a)));
-        _lineTo(transformOctant.apply(Offset(0, param.top.se_a)));
-      }
-      return;
-    }
-    if (!reverse) {
-      _addOctant(param.top, false, false, transform);
-      _addOctant(param.right, true, true, transform);
-    } else {
-      _addOctant(param.right, false, true, transform);
-      _addOctant(param.top, true, false, transform);
-    }
-  }
-
-  List<Offset> _superellipseArcPoints(_RSuperellipseOctant param) {
-    final Offset start = Offset(0, param.se_a);
-    final Offset end = param.circleStart;
-    final Offset startTangent = Offset(1, 0);
-    final Offset circleStartVector = param.circleStart - param.circleCenter;
-    final Offset endTangent =
-        Offset(-circleStartVector.dy, circleStartVector.dx) / circleStartVector.distance;
-
-    final (double startFactor, double endFactor) = _superellipseBezierFactors(param.se_n);
-    return <Offset>[
-      start,
-      start + startTangent * startFactor * param.se_a,
-      end + endTangent * endFactor * param.se_a,
-      end,
-    ];
-  }
-
-  List<Offset> _circularArcPoints(_RSuperellipseOctant param) {
-    final Offset startVector = param.circleStart - param.circleCenter;
-    final Offset endVector = _rotate(startVector, -param.circleMaxAngle);
-    final Offset circleEnd = param.circleCenter + endVector;
-    final Offset startTangent = Offset(startVector.dy, -startVector.dx) / startVector.distance;
-    final Offset endTangent = Offset(-endVector.dy, endVector.dx) / endVector.distance;
-    final double bezierFactor = math.tan(param.circleMaxAngle / 4) * 4 / 3;
-    final double radius = startVector.distance;
-
-    return <Offset>[
-      param.circleStart,
-      param.circleStart + startTangent * bezierFactor * radius,
-      circleEnd + endTangent * bezierFactor * radius,
-      circleEnd,
-    ];
-  }
-
-  void _addOctant(
-    _RSuperellipseOctant param,
-    bool reverse,
-    bool flip,
-    _Transform externalTransform,
-  ) {
-    _Transform transform = _Transform.makeComposite(
-      externalTransform,
-      _Transform.makeTranslate(param.offset),
-    );
-    if (flip) {
-      transform = _Transform.makeComposite(transform, _Transform.kFlip);
-    }
-
-    final List<Offset> circlePoints = _circularArcPoints(param);
-    final List<Offset> sePoints = _superellipseArcPoints(param);
-
-    if (!reverse) {
-      _cubicTo(
-        transform.apply(sePoints[1]),
-        transform.apply(sePoints[2]),
-        transform.apply(sePoints[3]),
-      );
-      _cubicTo(
-        transform.apply(circlePoints[1]),
-        transform.apply(circlePoints[2]),
-        transform.apply(circlePoints[3]),
-      );
-    } else {
-      _cubicTo(
-        transform.apply(circlePoints[2]),
-        transform.apply(circlePoints[1]),
-        transform.apply(circlePoints[0]),
-      );
-      _cubicTo(
-        transform.apply(sePoints[2]),
-        transform.apply(sePoints[1]),
-        transform.apply(sePoints[0]),
-      );
-    }
-  }
-
-  void _cubicTo(Offset p2, Offset p3, Offset p4) {
-    path.cubicTo(p2.dx, p2.dy, p3.dx, p3.dy, p4.dx, p4.dy);
-  }
-
-  void _lineTo(Offset p) {
-    path.lineTo(p.dx, p.dy);
-  }
-
-  static (double, double) _superellipseBezierFactors(double n) {
-    const List<(double, double)> kPrecomputedVariables = [
-      /*n= 2.0*/ (0.01339448, 0.05994973),
-      /*n= 3.0*/ (0.13664115, 0.13592082),
-      /*n= 4.0*/ (0.24545546, 0.14099516),
-      /*n= 5.0*/ (0.32353151, 0.12808021),
-      /*n= 6.0*/ (0.39093068, 0.11726264),
-      /*n= 7.0*/ (0.44847800, 0.10808278),
-      /*n= 8.0*/ (0.49817452, 0.10026175),
-      /*n= 9.0*/ (0.54105583, 0.09344429),
-      /*n=10.0*/ (0.57812578, 0.08748984),
-      /*n=11.0*/ (0.61050961, 0.08224722),
-      /*n=12.0*/ (0.63903989, 0.07759639),
-      /*n=13.0*/ (0.66416338, 0.07346530),
-      /*n=14.0*/ (0.68675338, 0.06974996),
-      /*n=15.0*/ (0.70678034, 0.06529512),
-    ];
-    final int kNumRecords = kPrecomputedVariables.length;
-    const double kStep = 1.00;
-    const double kMinN = 2.00;
-    final double kMaxN = kMinN + (kNumRecords - 1) * kStep;
-
-    if (n >= kMaxN) {
-      return (
-        1.07 - math.exp(1.307649835) * math.pow(n, -0.8568516731),
-        -0.01 + math.exp(-0.9287690322) * math.pow(n, -0.6120901398),
-      );
-    }
-
-    double steps = (n - kMinN) / kStep;
-    steps = steps.clamp(0, kNumRecords - 1);
-    final int left = (steps).floor().clamp(0, kNumRecords - 2).toInt();
-    final double frac = steps - left;
-
-    return (
-      (1 - frac) * kPrecomputedVariables[left].$1 + frac * kPrecomputedVariables[left + 1].$1,
-      (1 - frac) * kPrecomputedVariables[left].$2 + frac * kPrecomputedVariables[left + 1].$2,
-    );
-  }
-
   static double _split(double left, double right, double ratioLeft, double ratioRight) {
     if (ratioLeft == 0 && ratioRight == 0) {
       return (left + right) / 2;
     }
     return (left * ratioRight + right * ratioLeft) / (ratioLeft + ratioRight);
-  }
-
-  static Offset _rotate(Offset p, double radians) {
-    final double cos_a = math.cos(radians);
-    final double sin_a = math.sin(radians);
-    return Offset(p.dx * cos_a - p.dy * sin_a, p.dx * sin_a + p.dy * cos_a);
   }
 }
 
