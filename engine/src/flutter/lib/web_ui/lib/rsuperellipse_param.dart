@@ -221,15 +221,13 @@ class _RSuperellipseQuadrant {
   }
 }
 
-// A helper for composing affine transformations.
+// A helper class for composing affine transformations.
 //
-// This serves as an internal utility to build and combine transforms because
-// `dart:ui` does not provide a direct API for matrix composition.
-extension type _Transform(Offset Function(Offset) transform) {
-  Offset call(Offset p) => transform(p);
-
+// This is used to build and combine transforms because `dart:ui` does not
+// provide a direct API for matrix composition.
+extension type _Transform(Offset Function(Offset) apply) {
   static _Transform makeComposite(_Transform second, _Transform first) {
-    return _Transform((Offset p) => second.transform(first.transform(p)));
+    return _Transform((Offset p) => second.apply(first.apply(p)));
   }
 
   static _Transform makeTranslate(Offset offset) {
@@ -337,15 +335,15 @@ class _RSuperellipsePathBuilder {
           transform,
           _Transform.makeTranslate(param.right.offset),
         );
-        _lineTo(transformOctant(Offset(param.right.se_a, param.right.se_a)));
-        _lineTo(transformOctant(Offset(param.right.se_a, 0)));
+        _lineTo(transformOctant.apply(Offset(param.right.se_a, param.right.se_a)));
+        _lineTo(transformOctant.apply(Offset(param.right.se_a, 0)));
       } else {
         final _Transform transformOctant = _Transform.makeComposite(
           transform,
           _Transform.makeTranslate(param.top.offset),
         );
-        _lineTo(transformOctant(Offset(param.top.se_a, param.top.se_a)));
-        _lineTo(transformOctant(Offset(0, param.top.se_a)));
+        _lineTo(transformOctant.apply(Offset(param.top.se_a, param.top.se_a)));
+        _lineTo(transformOctant.apply(Offset(0, param.top.se_a)));
       }
       return;
     }
@@ -410,11 +408,27 @@ class _RSuperellipsePathBuilder {
     final List<Offset> sePoints = _superellipseArcPoints(param);
 
     if (!reverse) {
-      _cubicTo(transform(sePoints[1]), transform(sePoints[2]), transform(sePoints[3]));
-      _cubicTo(transform(circlePoints[1]), transform(circlePoints[2]), transform(circlePoints[3]));
+      _cubicTo(
+        transform.apply(sePoints[1]),
+        transform.apply(sePoints[2]),
+        transform.apply(sePoints[3]),
+      );
+      _cubicTo(
+        transform.apply(circlePoints[1]),
+        transform.apply(circlePoints[2]),
+        transform.apply(circlePoints[3]),
+      );
     } else {
-      _cubicTo(transform(circlePoints[2]), transform(circlePoints[1]), transform(circlePoints[0]));
-      _cubicTo(transform(sePoints[2]), transform(sePoints[1]), transform(sePoints[0]));
+      _cubicTo(
+        transform.apply(circlePoints[2]),
+        transform.apply(circlePoints[1]),
+        transform.apply(circlePoints[0]),
+      );
+      _cubicTo(
+        transform.apply(sePoints[2]),
+        transform.apply(sePoints[1]),
+        transform.apply(sePoints[0]),
+      );
     }
   }
 
