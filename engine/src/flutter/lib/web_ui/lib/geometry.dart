@@ -1169,11 +1169,6 @@ class RSuperellipse extends _RRectLike<RSuperellipse> {
   @override
   final bool _uniformRadii;
 
-  bool contains(Offset point) {
-    final (Path path, Offset offset) = toPathOffset();
-    return path.contains(point - offset);
-  }
-
   /// (Web only) Returns a [Path] for this shape and an [Offset] for its
   /// placement.
   ///
@@ -1194,23 +1189,6 @@ class RSuperellipse extends _RRectLike<RSuperellipse> {
     } else {
       return (_RSuperellipsePathBuilder.exact(this).path, Offset.zero);
     }
-  }
-
-  static final RSuperellipse zero = RSuperellipse._raw();
-
-  static RSuperellipse? lerp(RSuperellipse? a, RSuperellipse? b, double t) {
-    if (a == null) {
-      if (b == null) {
-        return null;
-      }
-      return b._lerpTo(null, 1 - t);
-    }
-    return a._lerpTo(b, t);
-  }
-
-  @override
-  String toString() {
-    return _toString(className: 'RSuperellipse');
   }
 
   // Approximates a rounded superellipse with a round rectangle to the
@@ -1236,6 +1214,28 @@ class RSuperellipse extends _RRectLike<RSuperellipse> {
       brRadiusX: brRadiusX,
       brRadiusY: brRadiusY,
     );
+  }
+
+  static const RSuperellipse zero = RSuperellipse._raw();
+
+  bool contains(Offset point) {
+    final (Path path, Offset offset) = toPathOffset();
+    return path.contains(point - offset);
+  }
+
+  static RSuperellipse? lerp(RSuperellipse? a, RSuperellipse? b, double t) {
+    if (a == null) {
+      if (b == null) {
+        return null;
+      }
+      return b._lerpTo(null, 1 - t);
+    }
+    return a._lerpTo(b, t);
+  }
+
+  @override
+  String toString() {
+    return _toString(className: 'RSuperellipse');
   }
 }
 
