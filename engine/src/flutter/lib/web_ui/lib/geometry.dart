@@ -461,10 +461,18 @@ abstract class _RRectLike<T extends _RRectLike<T>> {
   final double blRadiusY;
   Radius get blRadius => Radius.elliptical(blRadiusX, blRadiusY);
 
-  /// Whether the radii of the four corners are the same.
-  ///
-  /// This is a Web-only flag for optimization.
-  bool get uniformRadii => false;
+  // Whether the radii of the four corners are guaranteed to be the same.
+  //
+  // This is a Web-only flag for optimization.
+  //
+  // Returns `true` only if the object was constructed in a way that guarantees
+  // all radii are equal (e.g., from `.fromRectAndRadius`), saving the cost of
+  // checking the corner radii fields individually.
+  //
+  // A `false` return value does not mean the radii are necessarily different.
+  // It simply means there's no guarantee, and they must be compared manually
+  // if uniformity needs to be determined.
+  bool get _uniformRadii => false;
 
   T shift(Offset offset) {
     return _create(
@@ -480,7 +488,7 @@ abstract class _RRectLike<T extends _RRectLike<T>> {
       blRadiusY: blRadiusY,
       brRadiusX: brRadiusX,
       brRadiusY: brRadiusY,
-      uniformRadii: uniformRadii,
+      uniformRadii: _uniformRadii,
     );
   }
 
@@ -498,7 +506,7 @@ abstract class _RRectLike<T extends _RRectLike<T>> {
       blRadiusY: math.max(0, blRadiusY + delta),
       brRadiusX: math.max(0, brRadiusX + delta),
       brRadiusY: math.max(0, brRadiusY + delta),
-      uniformRadii: uniformRadii,
+      uniformRadii: _uniformRadii,
     );
   }
 
@@ -622,7 +630,7 @@ abstract class _RRectLike<T extends _RRectLike<T>> {
         blRadiusY: blRadiusY * scale,
         brRadiusX: brRadiusX * scale,
         brRadiusY: brRadiusY * scale,
-        uniformRadii: uniformRadii,
+        uniformRadii: _uniformRadii,
       );
     }
 
@@ -639,7 +647,7 @@ abstract class _RRectLike<T extends _RRectLike<T>> {
       blRadiusY: blRadiusY,
       brRadiusX: brRadiusX,
       brRadiusY: brRadiusY,
-      uniformRadii: uniformRadii,
+      uniformRadii: _uniformRadii,
     );
   }
 
@@ -661,7 +669,7 @@ abstract class _RRectLike<T extends _RRectLike<T>> {
         brRadiusY: math.max(0, brRadiusY * k),
         blRadiusX: math.max(0, blRadiusX * k),
         blRadiusY: math.max(0, blRadiusY * k),
-        uniformRadii: uniformRadii,
+        uniformRadii: _uniformRadii,
       );
     } else {
       return _create(
@@ -677,7 +685,7 @@ abstract class _RRectLike<T extends _RRectLike<T>> {
         brRadiusY: math.max(0, _lerpDouble(brRadiusY, b.brRadiusY, t)),
         blRadiusX: math.max(0, _lerpDouble(blRadiusX, b.blRadiusX, t)),
         blRadiusY: math.max(0, _lerpDouble(blRadiusY, b.blRadiusY, t)),
-        uniformRadii: uniformRadii,
+        uniformRadii: _uniformRadii,
       );
     }
   }
@@ -764,6 +772,7 @@ class RRect extends _RRectLike<RRect> {
         blRadiusY: radiusY,
         brRadiusX: radiusX,
         brRadiusY: radiusY,
+        uniformRadii: true,
       );
 
   RRect.fromLTRBR(double left, double top, double right, double bottom, Radius radius)
@@ -780,6 +789,7 @@ class RRect extends _RRectLike<RRect> {
         blRadiusY: radius.y,
         brRadiusX: radius.x,
         brRadiusY: radius.y,
+        uniformRadii: true,
       );
 
   RRect.fromRectXY(Rect rect, double radiusX, double radiusY)
@@ -796,6 +806,7 @@ class RRect extends _RRectLike<RRect> {
         blRadiusY: radiusY,
         brRadiusX: radiusX,
         brRadiusY: radiusY,
+        uniformRadii: true,
       );
 
   RRect.fromRectAndRadius(Rect rect, Radius radius)
@@ -812,6 +823,7 @@ class RRect extends _RRectLike<RRect> {
         blRadiusY: radius.y,
         brRadiusX: radius.x,
         brRadiusY: radius.y,
+        uniformRadii: true,
       );
 
   RRect.fromLTRBAndCorners(
@@ -836,6 +848,7 @@ class RRect extends _RRectLike<RRect> {
          blRadiusY: bottomLeft.y,
          brRadiusX: bottomRight.x,
          brRadiusY: bottomRight.y,
+         uniformRadii: false,
        );
 
   RRect.fromRectAndCorners(
@@ -857,6 +870,7 @@ class RRect extends _RRectLike<RRect> {
          blRadiusY: bottomLeft.y,
          brRadiusX: bottomRight.x,
          brRadiusY: bottomRight.y,
+         uniformRadii: false,
        );
 
   const RRect._raw({
@@ -872,6 +886,8 @@ class RRect extends _RRectLike<RRect> {
     super.brRadiusY = 0.0,
     super.blRadiusX = 0.0,
     super.blRadiusY = 0.0,
+    // RRect doesn't need uniformRadii for optimization for now.
+    bool uniformRadii = false,
   });
 
   @override
@@ -902,6 +918,7 @@ class RRect extends _RRectLike<RRect> {
     blRadiusY: blRadiusY,
     brRadiusX: brRadiusX,
     brRadiusY: brRadiusY,
+    uniformRadii: uniformRadii,
   );
 
   static const RRect zero = RRect._raw();
@@ -1115,8 +1132,8 @@ class RSuperellipse extends _RRectLike<RSuperellipse> {
     super.brRadiusY = 0.0,
     super.blRadiusX = 0.0,
     super.blRadiusY = 0.0,
-    this.uniformRadii = false,
-  });
+    bool uniformRadii = false,
+  }) : _uniformRadii = uniformRadii;
 
   @override
   RSuperellipse _create({
@@ -1150,7 +1167,7 @@ class RSuperellipse extends _RRectLike<RSuperellipse> {
   );
 
   @override
-  final bool uniformRadii;
+  final bool _uniformRadii;
 
   bool contains(Offset point) {
     final (Path path, Offset offset) = toPathOffset();
@@ -1172,7 +1189,7 @@ class RSuperellipse extends _RRectLike<RSuperellipse> {
   /// and then draw the `path`. To add it to another path, provide both the
   /// `path` and the `offset` to the `addPath` method.
   (Path, Offset) toPathOffset() {
-    if (uniformRadii) {
+    if (_uniformRadii) {
       return (_RSuperellipseCache.instance.get(width, height, tlRadius), center);
     } else {
       return (_RSuperellipsePathBuilder.exact(this).path, Offset.zero);
