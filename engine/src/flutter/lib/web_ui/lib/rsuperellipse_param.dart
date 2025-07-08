@@ -538,9 +538,11 @@ class _CacheKey {
 /// An LRU (Least Recently Used) cache that maps from normalized RSuperellipse
 /// to its path.
 class _RSuperellipseCache {
-  static late final _RSuperellipseCache instance = _RSuperellipseCache._(
-    capacity: _kRSuperellipseCacheCapacity,
-  );
+  // A rough estimate by that a typical screen should hardly contain more than
+  // 20 RSuperellipses.
+  static const int kCapacity = 50;
+
+  static late final _RSuperellipseCache instance = _RSuperellipseCache._(capacity: kCapacity);
 
   // The internal cache storage. A [LinkedHashMap] maintains insertion order,
   // allowing us to treat the first entry as the least recently used and
