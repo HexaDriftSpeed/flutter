@@ -109,10 +109,13 @@ class _RSuperellipseOctant {
     }
   }
 
+  // Performance note: Web macrobenchmark shows that, despite the fact that both
+  // arc computing functions return fixed-length lists, returning `List<Offset>` as
+  // is faster than returning Records.
   List<Offset> _superellipseArcPoints() {
     final Offset start = Offset(0, se_a);
     final Offset end = circleStart;
-    final Offset startTangent = Offset(1, 0);
+    const Offset startTangent = Offset(1, 0);
     final Offset circleStartVector = circleStart - circleCenter;
     final Offset endTangent =
         Offset(-circleStartVector.dy, circleStartVector.dx) / circleStartVector.distance;
