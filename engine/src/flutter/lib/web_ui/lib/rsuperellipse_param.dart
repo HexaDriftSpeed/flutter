@@ -268,8 +268,8 @@ class _RSuperellipseQuadrant {
       cornerVector.dx.abs() / forwardScale.width,
       cornerVector.dy.abs() / forwardScale.height,
     );
-    final Size signedScale = _replaceNaNWith(
-      Size(cornerVector.dx / normHalfSize.width, cornerVector.dy / normHalfSize.height),
+    final Offset signedScale = _replaceNaNWith(
+      Offset(cornerVector.dx / normHalfSize.width, cornerVector.dy / normHalfSize.height),
       sign,
     );
 
@@ -293,18 +293,22 @@ class _RSuperellipseQuadrant {
   });
 
   final Offset offset;
-  final Size signedScale;
+  final Offset signedScale;
   final Size sign;
   final _RSuperellipseOctant top;
   final _RSuperellipseOctant right;
 
-  void addToPath(_RSuperellipsePath path, bool reverse, [Offset scaleSign = const Offset(1, 1)]) {
+  void addToPath(
+    _RSuperellipsePath path, {
+    required bool reversed,
+    Size extraScale = const Size(1, 1),
+  }) {
     final _Transform transform = _Transform.makeComposite(
       _Transform.makeTranslate(offset),
-      _Transform.makeScale(scaleSign.scale(signedScale.width, signedScale.height)),
+      _Transform.makeScale(signedScale.scale(extraScale.width, extraScale.height)),
     );
     if (top.se_n < 2 || right.se_n < 2) {
-      if (!reverse) {
+      if (!reversed) {
         final _Transform transformOctant = _Transform.makeComposite(
           transform,
           _Transform.makeTranslate(right.offset),
@@ -321,7 +325,7 @@ class _RSuperellipseQuadrant {
       }
       return;
     }
-    if (!reverse) {
+    if (!reversed) {
       top.addToPath(path, false, false, transform);
       right.addToPath(path, true, true, transform);
     } else {
@@ -330,11 +334,8 @@ class _RSuperellipseQuadrant {
     }
   }
 
-  static Size _replaceNaNWith(Size p, Size sign) {
-    return Size(
-      p.width.isFinite ? p.width : sign.width,
-      p.height.isFinite ? p.height : sign.height,
-    );
+  static Offset _replaceNaNWith(Offset p, Size sign) {
+    return Offset(p.dx.isFinite ? p.dx : sign.width, p.dy.isFinite ? p.dy : sign.height);
   }
 }
 
@@ -360,6 +361,7 @@ extension type _Transform(Offset Function(Offset) apply) {
   });
 }
 
+// The Path class extended with a few utility methods.
 extension type _RSuperellipsePath(Path path) {
   void cubicToPoints(Offset p2, Offset p3, Offset p4) {
     path.cubicTo(p2.dx, p2.dy, p3.dx, p3.dy, p4.dx, p4.dy);
@@ -388,10 +390,10 @@ class _RSuperellipsePathBuilder {
     );
     final Offset start = Offset(0, height / 2);
     path.moveTo(start.dx, start.dy);
-    bottomRight.addToPath(p, false, const Offset(1, 1));
-    bottomRight.addToPath(p, true, const Offset(1, -1));
-    bottomRight.addToPath(p, false, const Offset(-1, -1));
-    bottomRight.addToPath(p, true, const Offset(-1, 1));
+    bottomRight.addToPath(p, reversed: false, extraScale: const Size(1, 1));
+    bottomRight.addToPath(p, reversed: true, extraScale: const Size(1, -1));
+    bottomRight.addToPath(p, reversed: false, extraScale: const Size(-1, -1));
+    bottomRight.addToPath(p, reversed: true, extraScale: const Size(-1, 1));
     path.lineTo(start.dx, start.dy);
     path.close();
   }
@@ -411,25 +413,25 @@ class _RSuperellipsePathBuilder {
       Offset(r.right, r.top),
       r.trRadius,
       const Size(1, -1),
-    ).addToPath(p, false);
+    ).addToPath(p, reversed: false);
     _RSuperellipseQuadrant(
       Offset(bottomSplit, rightSplit),
       Offset(r.right, r.bottom),
       r.brRadius,
       const Size(1, 1),
-    ).addToPath(p, true);
+    ).addToPath(p, reversed: true);
     _RSuperellipseQuadrant(
       Offset(bottomSplit, leftSplit),
       Offset(r.left, r.bottom),
       r.blRadius,
       const Size(-1, 1),
-    ).addToPath(p, false);
+    ).addToPath(p, reversed: false);
     _RSuperellipseQuadrant(
       Offset(topSplit, leftSplit),
       Offset(r.left, r.top),
       r.tlRadius,
       const Size(-1, -1),
-    ).addToPath(p, true);
+    ).addToPath(p, reversed: true);
 
     path.lineTo(start.dx, start.dy);
     path.close();
