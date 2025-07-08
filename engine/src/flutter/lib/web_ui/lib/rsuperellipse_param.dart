@@ -239,7 +239,7 @@ class _RSuperellipseOctant {
       steps = (ratio - _kFirstMaxRatio) * _kSecondStepInverse + _kFirstNumRecords - 1;
     }
 
-    final int left = (steps).floor().clamp(0, _kNumRecords - 2).toInt();
+    final int left = steps.floor().clamp(0, _kNumRecords - 2).toInt();
     final double frac = steps - left;
 
     final double n =
@@ -282,15 +282,6 @@ class _RSuperellipseQuadrant {
   final _RSuperellipseOctant top;
   final _RSuperellipseOctant right;
 
-  // Compute parameters for a quadrant of a rounded superellipse with asymmetrical
-  // radii.
-  //
-  // The `corner` is the coordinate of the corner point in the same coordinate
-  // space as `center`, which specifies the half size of the bounding box.
-  //
-  // The `sign` is a vector of {±1, ±1} that specifies which quadrant the curve
-  // should be, which should have the same sign as `corner - center` except that
-  // the latter may have a 0.
   factory _RSuperellipseQuadrant.computeQuadrant(
     Offset center,
     Offset corner,
@@ -477,22 +468,10 @@ class _RSuperellipsePathBuilder {
   }
 }
 
-/// Internal node for the doubly linked list in RSuperellipseCache.
-/// It stores the key, value, and references to the previous and next nodes.
-class _CacheEntry<K, V> {
-  K key;
-  V value;
-  _CacheEntry<K, V>? previous;
-  _CacheEntry<K, V>? next;
-
-  _CacheEntry(this.key, this.value);
-}
-
 /// The cache key, composed of width, height, and radius.
 ///
 /// To handle floating-point precision issues and make it usable as a Map key,
 /// we multiply each float by 10 and round it to an integer.
-/// We must also override the `==` and `hashCode` methods.
 class _CacheKey {
   _CacheKey(double width, double height, double radiusX, double radiusY)
     : _widthInt = (width * kPrecisionFactor).round(),
