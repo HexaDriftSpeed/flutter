@@ -461,17 +461,9 @@ abstract class _RRectLike<T extends _RRectLike<T>> {
   final double blRadiusY;
   Radius get blRadius => Radius.elliptical(blRadiusX, blRadiusY);
 
-  /// Whether the radii of the four corners are guaranteed to be the same.
+  /// Whether the radii of the four corners are the same.
   ///
   /// This is a Web-only flag for optimization.
-  ///
-  /// Returns `true` only if the object was constructed in a way that guarantees
-  /// all radii are equal (e.g., from `.fromRectAndRadius`), saving the cost of
-  /// checking the corner radii fields individually.
-  ///
-  /// A `false` return value does not mean the radii are necessarily different.
-  /// It simply means there's no guarantee, and they must be compared manually
-  /// if uniformity needs to be determined.
   bool get uniformRadii => false;
 
   T shift(Offset offset) {
@@ -1157,8 +1149,6 @@ class RSuperellipse extends _RRectLike<RSuperellipse> {
     uniformRadii: uniformRadii,
   );
 
-  // A web-only flag that labels whether the corner radii are the same on all
-  // four corners.
   @override
   final bool uniformRadii;
 
@@ -1167,12 +1157,20 @@ class RSuperellipse extends _RRectLike<RSuperellipse> {
     return path.contains(point - offset);
   }
 
-  // A web-only method that returns a path for this shape, and an offset
-  // that the path is based on.
-  //
-  // For example, to use this path in `Path.addPath`, then the offset should
-  // be used as the 2nd parameter. To use this path in drawing or clipping,
-  // this offset should be used to `translate` the canvas first.
+  /// (Web only) Returns a [Path] for this shape and an [Offset] for its
+  /// placement.
+  ///
+  /// To correctly position the shape, the caller is required to apply the
+  /// returned `offset` to the `path`.
+  ///
+  /// The returned path's coordinate system is relative to the `offset`. The
+  /// caller should not make any assumptions about the path's origin or whether
+  /// the offset is zero, as the implementation may use different strategies for
+  /// efficiency.
+  ///
+  /// For example, to draw the shape, first translate the canvas by the `offset`
+  /// and then draw the `path`. To add it to another path, provide both the
+  /// `path` and the `offset` to the `addPath` method.
   (Path, Offset) toPathOffset() {
     if (uniformRadii) {
       return (_RSuperellipseCache.instance.get(width, height, tlRadius), center);
