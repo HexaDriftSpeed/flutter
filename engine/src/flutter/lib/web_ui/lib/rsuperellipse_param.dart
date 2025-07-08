@@ -57,8 +57,9 @@ class _RSuperellipseOctant {
     final Offset pointM = Offset(a - g, a - g);
     final Offset pointJ = Offset(xJ, yJ);
     final Offset circleCenter = radius == 0 ? pointM : _findCircleCenter(pointJ, pointM, R);
-    final double circleMaxAngle =
-        radius == 0 ? 0 : _angleTo(pointM - circleCenter, pointJ - circleCenter);
+    final double circleMaxAngle = radius == 0
+        ? 0
+        : _angleTo(pointM - circleCenter, pointJ - circleCenter);
 
     return _RSuperellipseOctant(
       offset: center,
@@ -220,7 +221,29 @@ class _RSuperellipseQuadrant {
   }
 }
 
-typedef _Transform = Offset Function(Offset);
+// A helper for composing affine transformations.
+//
+// This serves as an internal utility to build and combine transforms because
+// `dart:ui` does not provide a direct API for matrix composition.
+extension type _Transform(Offset Function(Offset) transform) {
+  Offset call(Offset p) => transform(p);
+
+  static _Transform makeComposite(_Transform second, _Transform first) {
+    return _Transform((Offset p) => second.transform(first.transform(p)));
+  }
+
+  static _Transform makeTranslate(Offset offset) {
+    return _Transform((Offset p) => Offset(p.dx + offset.dx, p.dy + offset.dy));
+  }
+
+  static _Transform makeScale(Offset scale) {
+    return _Transform((Offset p) => Offset(p.dx * scale.dx, p.dy * scale.dy));
+  }
+
+  static final _Transform kFlip = _Transform((Offset p) {
+    return Offset(p.dy, p.dx);
+  });
+}
 
 // A class that can build a path for a `RSuperellipse`.
 //
@@ -304,17 +327,23 @@ class _RSuperellipsePathBuilder {
     bool reverse, [
     Offset scaleSign = const Offset(1, 1),
   ]) {
-    final _Transform transform = _composite(
-      _translate(param.offset),
-      _scale(scaleSign.scale(param.signedScale.width, param.signedScale.height)),
+    final _Transform transform = _Transform.makeComposite(
+      _Transform.makeTranslate(param.offset),
+      _Transform.makeScale(scaleSign.scale(param.signedScale.width, param.signedScale.height)),
     );
     if (param.top.se_n < 2 || param.right.se_n < 2) {
       if (!reverse) {
-        final _Transform transformOctant = _composite(transform, _translate(param.right.offset));
+        final _Transform transformOctant = _Transform.makeComposite(
+          transform,
+          _Transform.makeTranslate(param.right.offset),
+        );
         _lineTo(transformOctant(Offset(param.right.se_a, param.right.se_a)));
         _lineTo(transformOctant(Offset(param.right.se_a, 0)));
       } else {
-        final _Transform transformOctant = _composite(transform, _translate(param.top.offset));
+        final _Transform transformOctant = _Transform.makeComposite(
+          transform,
+          _Transform.makeTranslate(param.top.offset),
+        );
         _lineTo(transformOctant(Offset(param.top.se_a, param.top.se_a)));
         _lineTo(transformOctant(Offset(0, param.top.se_a)));
       }
@@ -369,9 +398,12 @@ class _RSuperellipsePathBuilder {
     bool flip,
     _Transform externalTransform,
   ) {
-    _Transform transform = _composite(externalTransform, _translate(param.offset));
+    _Transform transform = _Transform.makeComposite(
+      externalTransform,
+      _Transform.makeTranslate(param.offset),
+    );
     if (flip) {
-      transform = _composite(transform, _flip);
+      transform = _Transform.makeComposite(transform, _Transform.kFlip);
     }
 
     final List<Offset> circlePoints = _circularArcPoints(param);
@@ -445,24 +477,6 @@ class _RSuperellipsePathBuilder {
     final double cos_a = math.cos(radians);
     final double sin_a = math.sin(radians);
     return Offset(p.dx * cos_a - p.dy * sin_a, p.dx * sin_a + p.dy * cos_a);
-  }
-
-  // Compositable transforms
-
-  static _Transform _composite(_Transform second, _Transform first) {
-    return (Offset p) => second(first(p));
-  }
-
-  static Offset _flip(Offset p) {
-    return Offset(p.dy, p.dx);
-  }
-
-  static _Transform _translate(Offset offset) {
-    return (Offset p) => Offset(p.dx + offset.dx, p.dy + offset.dy);
-  }
-
-  static _Transform _scale(Offset scale) {
-    return (Offset p) => Offset(p.dx * scale.dx, p.dy * scale.dy);
   }
 }
 
