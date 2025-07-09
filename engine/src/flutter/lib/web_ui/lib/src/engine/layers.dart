@@ -337,7 +337,7 @@ class ClipRSuperellipseOperation implements LayerOperation {
   @override
   Map<String, Object> get debugJsonDescription {
     return <String, Object>{
-      'type': 'clipRSuperEllipse',
+      'type': 'clipRSuperellipse',
       'rsuperellipse': {
         'left': rsuperellipse.left,
         'top': rsuperellipse.top,

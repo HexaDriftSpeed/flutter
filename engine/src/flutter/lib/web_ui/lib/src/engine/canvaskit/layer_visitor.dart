@@ -112,9 +112,7 @@ class PrerollVisitor extends LayerVisitor {
 
   @override
   void visitClipRSuperellipse(ClipRSuperellipseEngineLayer clipRSuperellipse) {
-    // TODO(dkwingsmt): Properly implement RSuperellipse on Web instead of falling
-    // back to RRect.  https://github.com/flutter/flutter/issues/163718
-    mutatorsStack.pushClipRRect(clipRSuperellipse.clipRSuperellipse.toApproximateRRect());
+    mutatorsStack.pushClipRSuperellipse(clipRSuperellipse.clipRSuperellipse);
     final ui.Rect childPaintBounds = prerollChildren(clipRSuperellipse);
     if (childPaintBounds.overlaps(clipRSuperellipse.clipRSuperellipse.outerRect)) {
       clipRSuperellipse.paintBounds = childPaintBounds.intersect(
@@ -333,10 +331,8 @@ class MeasureVisitor extends LayerVisitor {
     assert(clipRSuperellipse.needsPainting);
 
     measuringCanvas.save();
-    // TODO(dkwingsmt): Properly implement RSuperellipse on Web instead of falling
-    // back to RRect.  https://github.com/flutter/flutter/issues/163718
-    measuringCanvas.clipRRect(
-      clipRSuperellipse.clipRSuperellipse.toApproximateRRect(),
+    measuringCanvas.clipRSuperellipse(
+      clipRSuperellipse.clipRSuperellipse,
       clipRSuperellipse.clipBehavior != ui.Clip.hardEdge,
     );
     if (clipRSuperellipse.clipBehavior == ui.Clip.antiAliasWithSaveLayer) {
@@ -578,10 +574,8 @@ class PaintVisitor extends LayerVisitor {
   void visitClipRSuperellipse(ClipRSuperellipseEngineLayer clipRSuperellipse) {
     assert(clipRSuperellipse.needsPainting);
     nWayCanvas.save();
-    // TODO(dkwingsmt): Properly implement RSuperellipse on Web instead of falling
-    // back to RRect.  https://github.com/flutter/flutter/issues/163718
-    nWayCanvas.clipRRect(
-      clipRSuperellipse.clipRSuperellipse.toApproximateRRect(),
+    nWayCanvas.clipRSuperellipse(
+      clipRSuperellipse.clipRSuperellipse,
       clipRSuperellipse.clipBehavior != ui.Clip.hardEdge,
     );
     if (clipRSuperellipse.clipBehavior == ui.Clip.antiAliasWithSaveLayer) {
