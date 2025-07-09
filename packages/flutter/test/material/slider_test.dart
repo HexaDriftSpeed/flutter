@@ -3645,11 +3645,11 @@ void main() {
       material,
       paints
         ..rrect()
-        ..rsuperellipse()
-        ..rsuperellipse()
-        ..rsuperellipse()
-        ..rsuperellipse()
-        ..rsuperellipse(color: CupertinoColors.white),
+        ..rrect()
+        ..rrect()
+        ..rrect()
+        ..rrect()
+        ..rrect(color: CupertinoColors.white),
     );
   });
 
@@ -3673,11 +3673,11 @@ void main() {
       material,
       paints
         ..rrect()
-        ..rsuperellipse()
-        ..rsuperellipse()
-        ..rsuperellipse()
-        ..rsuperellipse()
-        ..rsuperellipse(color: color),
+        ..rrect()
+        ..rrect()
+        ..rrect()
+        ..rrect()
+        ..rrect(color: color),
     );
   });
 
