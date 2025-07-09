@@ -3644,7 +3644,7 @@ void main() {
     expect(
       material,
       paints
-        ..rsuperellipse()
+        ..rrect()
         ..rsuperellipse()
         ..rsuperellipse()
         ..rsuperellipse()
@@ -3672,7 +3672,7 @@ void main() {
     expect(
       material,
       paints
-        ..rsuperellipse()
+        ..rrect()
         ..rsuperellipse()
         ..rsuperellipse()
         ..rsuperellipse()
