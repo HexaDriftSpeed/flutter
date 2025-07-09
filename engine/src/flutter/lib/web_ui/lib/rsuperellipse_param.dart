@@ -105,7 +105,12 @@ class _RSuperellipseOctant {
   final Offset circleCenter;
   final double circleMaxAngle;
 
-  void addToPath(_RSuperellipsePath path, _Transform externalTransform, {required bool reverse, required bool flip}) {
+  void addToPath(
+    _RSuperellipsePath path,
+    _Transform externalTransform, {
+    required bool reverse,
+    required bool flip,
+  }) {
     _Transform transform = _Transform.makeComposite(
       externalTransform,
       _Transform.makeTranslate(offset),
