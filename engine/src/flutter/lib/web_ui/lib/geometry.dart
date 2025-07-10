@@ -772,7 +772,6 @@ class RRect extends _RRectLike<RRect> {
         blRadiusY: radiusY,
         brRadiusX: radiusX,
         brRadiusY: radiusY,
-        uniformRadii: true,
       );
 
   RRect.fromLTRBR(double left, double top, double right, double bottom, Radius radius)
@@ -789,7 +788,6 @@ class RRect extends _RRectLike<RRect> {
         blRadiusY: radius.y,
         brRadiusX: radius.x,
         brRadiusY: radius.y,
-        uniformRadii: true,
       );
 
   RRect.fromRectXY(Rect rect, double radiusX, double radiusY)
@@ -806,7 +804,6 @@ class RRect extends _RRectLike<RRect> {
         blRadiusY: radiusY,
         brRadiusX: radiusX,
         brRadiusY: radiusY,
-        uniformRadii: true,
       );
 
   RRect.fromRectAndRadius(Rect rect, Radius radius)
@@ -823,7 +820,6 @@ class RRect extends _RRectLike<RRect> {
         blRadiusY: radius.y,
         brRadiusX: radius.x,
         brRadiusY: radius.y,
-        uniformRadii: true,
       );
 
   RRect.fromLTRBAndCorners(
@@ -848,7 +844,6 @@ class RRect extends _RRectLike<RRect> {
          blRadiusY: bottomLeft.y,
          brRadiusX: bottomRight.x,
          brRadiusY: bottomRight.y,
-         uniformRadii: false,
        );
 
   RRect.fromRectAndCorners(
@@ -870,7 +865,6 @@ class RRect extends _RRectLike<RRect> {
          blRadiusY: bottomLeft.y,
          brRadiusX: bottomRight.x,
          brRadiusY: bottomRight.y,
-         uniformRadii: false,
        );
 
   const RRect._raw({
@@ -886,8 +880,6 @@ class RRect extends _RRectLike<RRect> {
     super.brRadiusY = 0.0,
     super.blRadiusX = 0.0,
     super.blRadiusY = 0.0,
-    // RRect doesn't need uniformRadii for optimization for now.
-    bool uniformRadii = false,
   });
 
   @override
@@ -904,7 +896,7 @@ class RRect extends _RRectLike<RRect> {
     required double brRadiusY,
     required double blRadiusX,
     required double blRadiusY,
-    required bool uniformRadii,
+    required bool uniformRadii,  // Not used. See `get _uniformRadii`.
   }) => RRect._raw(
     top: top,
     left: left,
@@ -918,8 +910,10 @@ class RRect extends _RRectLike<RRect> {
     blRadiusY: blRadiusY,
     brRadiusX: brRadiusX,
     brRadiusY: brRadiusY,
-    uniformRadii: uniformRadii,
   );
+
+  // RRect doesn't need uniformRadii for optimization for now.
+  bool get _uniformRadii => false;
 
   static const RRect zero = RRect._raw();
 

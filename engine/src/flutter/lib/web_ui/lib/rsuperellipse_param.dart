@@ -44,7 +44,7 @@ extension type _RSuperellipsePath(Path path) {
 class _RSuperellipseOctant {
   factory _RSuperellipseOctant(Offset center, double a, double radius) {
     if (radius <= 0) {
-      return _RSuperellipseOctant.square(offset: center, se_a: a);
+      return _RSuperellipseOctant.square(offset: center, seA: a);
     }
 
     final double ratio = a * 2 / radius;
@@ -68,21 +68,21 @@ class _RSuperellipseOctant {
 
     return _RSuperellipseOctant._raw(
       offset: center,
-      se_a: a,
-      se_n: n,
-      se_max_theta: maxTheta,
+      seA: a,
+      seN: n,
+      seMaxTheta: maxTheta,
       circleStart: pointJ,
       circleCenter: circleCenter,
       circleMaxAngle: circleMaxAngle,
     );
   }
 
-  const _RSuperellipseOctant.square({required Offset offset, required double se_a})
+  const _RSuperellipseOctant.square({required Offset offset, required double seA})
     : this._raw(
         offset: offset,
-        se_a: se_a,
-        se_n: 0,
-        se_max_theta: 0,
+        seA: seA,
+        seN: 0,
+        seMaxTheta: 0,
         circleStart: Offset.zero,
         circleCenter: Offset.zero,
         circleMaxAngle: 0,
@@ -90,18 +90,18 @@ class _RSuperellipseOctant {
 
   const _RSuperellipseOctant._raw({
     required this.offset,
-    required this.se_a,
-    required this.se_n,
-    required this.se_max_theta,
+    required this.seA,
+    required this.seN,
+    required this.seMaxTheta,
     required this.circleStart,
     required this.circleCenter,
     required this.circleMaxAngle,
   });
 
   final Offset offset;
-  final double se_a;
-  final double se_n;
-  final double se_max_theta;
+  final double seA;
+  final double seN;
+  final double seMaxTheta;
   final Offset circleStart;
   final Offset circleCenter;
   final double circleMaxAngle;
@@ -149,18 +149,18 @@ class _RSuperellipseOctant {
   }
 
   List<Offset> _superellipseArcPoints() {
-    final Offset start = Offset(0, se_a);
+    final Offset start = Offset(0, seA);
     final Offset end = circleStart;
     const Offset startTangent = Offset(1, 0);
     final Offset circleStartVector = circleStart - circleCenter;
     final Offset endTangent =
         Offset(-circleStartVector.dy, circleStartVector.dx) / circleStartVector.distance;
 
-    final (double startFactor, double endFactor) = _superellipseBezierFactors(se_n);
+    final (double startFactor, double endFactor) = _superellipseBezierFactors(seN);
     return <Offset>[
       start,
-      start + startTangent * startFactor * se_a,
-      end + endTangent * endFactor * se_a,
+      start + startTangent * startFactor * seA,
+      end + endTangent * endFactor * seA,
       end,
     ];
   }
@@ -183,9 +183,9 @@ class _RSuperellipseOctant {
   }
 
   static Offset _rotate(Offset p, double radians) {
-    final double cos_a = math.cos(radians);
-    final double sin_a = math.sin(radians);
-    return Offset(p.dx * cos_a - p.dy * sin_a, p.dx * sin_a + p.dy * cos_a);
+    final double cosine = math.cos(radians);
+    final double sine = math.sin(radians);
+    return Offset(p.dx * cosine - p.dy * sine, p.dx * sine + p.dy * cosine);
   }
 
   static (double, double) _superellipseBezierFactors(double n) {
@@ -217,9 +217,8 @@ class _RSuperellipseOctant {
       );
     }
 
-    double steps = (n - kMinN) / kStep;
-    steps = steps.clamp(0, kNumRecords - 1);
-    final int left = (steps).floor().clamp(0, kNumRecords - 2).toInt();
+    final double steps = ((n - kMinN) / kStep).clamp(0, kNumRecords - 1);
+    final int left = steps.floor().clamp(0, kNumRecords - 2).toInt();
     final double frac = steps - left;
 
     return (
@@ -238,7 +237,7 @@ class _RSuperellipseOctant {
   }
 
   static (double, double) _computeNAndXj(double ratio) {
-    const List<List<double>> _kPrecomputedVariables = [
+    const List<List<double>> kPrecomputedVariables = [
       /*ratio=2.00*/ [2.00000000, 1.13276676],
       /*ratio=2.10*/ [2.18349805, 1.20311921],
       /*ratio=2.20*/ [2.33888662, 1.28698796],
@@ -252,40 +251,40 @@ class _RSuperellipseOctant {
       /*ratio=5.00*/ [6.43023796, 2.98020421],
     ];
 
-    const double _kMinRatio = 2.00;
-    const double _kFirstStepInverse = 10; // = 1 / 0.10
-    const double _kFirstMaxRatio = 2.50;
-    const double _kFirstNumRecords = 6;
-    const double _kSecondStepInverse = 2; // = 1 / 0.50
-    const double _kSecondMaxRatio = 5.00;
-    const double _kThirdNSlope = 1.559599389;
-    const double _kThirdKxjSlope = 0.522807185;
-    final int _kNumRecords = _kPrecomputedVariables.length;
+    const double kMinRatio = 2.00;
+    const double kFirstStepInverse = 10; // = 1 / 0.10
+    const double kFirstMaxRatio = 2.50;
+    const double kFirstNumRecords = 6;
+    const double kSecondStepInverse = 2; // = 1 / 0.50
+    const double kSecondMaxRatio = 5.00;
+    const double kThirdNSlope = 1.559599389;
+    const double kThirdFactorXjSlope = 0.522807185;
+    final int kNumRecords = kPrecomputedVariables.length;
 
-    if (ratio > _kSecondMaxRatio) {
+    if (ratio > kSecondMaxRatio) {
       final double n =
-          _kThirdNSlope * (ratio - _kSecondMaxRatio) + _kPrecomputedVariables[_kNumRecords - 1][0];
-      final double k_xJ =
-          _kThirdKxjSlope * (ratio - _kSecondMaxRatio) +
-          _kPrecomputedVariables[_kNumRecords - 1][1];
-      return (n, 1 - 1 / k_xJ);
+          kThirdNSlope * (ratio - kSecondMaxRatio) + kPrecomputedVariables[kNumRecords - 1][0];
+      final double factorXj =
+          kThirdFactorXjSlope * (ratio - kSecondMaxRatio) +
+          kPrecomputedVariables[kNumRecords - 1][1];
+      return (n, 1 - 1 / factorXj);
     }
-    ratio = ratio.clamp(_kMinRatio, _kSecondMaxRatio);
+    ratio = ratio.clamp(kMinRatio, kSecondMaxRatio);
     final double steps;
-    if (ratio < _kFirstMaxRatio) {
-      steps = (ratio - _kMinRatio) * _kFirstStepInverse;
+    if (ratio < kFirstMaxRatio) {
+      steps = (ratio - kMinRatio) * kFirstStepInverse;
     } else {
-      steps = (ratio - _kFirstMaxRatio) * _kSecondStepInverse + _kFirstNumRecords - 1;
+      steps = (ratio - kFirstMaxRatio) * kSecondStepInverse + kFirstNumRecords - 1;
     }
 
-    final int left = steps.floor().clamp(0, _kNumRecords - 2).toInt();
+    final int left = steps.floor().clamp(0, kNumRecords - 2).toInt();
     final double frac = steps - left;
 
     final double n =
-        (1 - frac) * _kPrecomputedVariables[left][0] + frac * _kPrecomputedVariables[left + 1][0];
-    final double k_xJ =
-        (1 - frac) * _kPrecomputedVariables[left][1] + frac * _kPrecomputedVariables[left + 1][1];
-    return (n, 1 - 1 / k_xJ);
+        (1 - frac) * kPrecomputedVariables[left][0] + frac * kPrecomputedVariables[left + 1][0];
+    final double factorXj =
+        (1 - frac) * kPrecomputedVariables[left][1] + frac * kPrecomputedVariables[left + 1][1];
+    return (n, 1 - 1 / factorXj);
   }
 
   static const double kGapFactor = 0.29289321881; // 1-cos(pi/4)
@@ -346,21 +345,21 @@ class _RSuperellipseQuadrant {
       _Transform.makeTranslate(offset),
       _Transform.makeScale(signedScale.scale(extraScale.width, extraScale.height)),
     );
-    if (top.se_n < 2 || right.se_n < 2) {
+    if (top.seN < 2 || right.seN < 2) {
       if (!reverse) {
         final _Transform transformOctant = _Transform.makeComposite(
           transform,
           _Transform.makeTranslate(right.offset),
         );
-        path.lineToPoint(transformOctant.apply(Offset(right.se_a, right.se_a)));
-        path.lineToPoint(transformOctant.apply(Offset(right.se_a, 0)));
+        path.lineToPoint(transformOctant.apply(Offset(right.seA, right.seA)));
+        path.lineToPoint(transformOctant.apply(Offset(right.seA, 0)));
       } else {
         final _Transform transformOctant = _Transform.makeComposite(
           transform,
           _Transform.makeTranslate(top.offset),
         );
-        path.lineToPoint(transformOctant.apply(Offset(top.se_a, top.se_a)));
-        path.lineToPoint(transformOctant.apply(Offset(0, top.se_a)));
+        path.lineToPoint(transformOctant.apply(Offset(top.seA, top.seA)));
+        path.lineToPoint(transformOctant.apply(Offset(0, top.seA)));
       }
       return;
     }
