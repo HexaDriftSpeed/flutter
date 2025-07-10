@@ -62,8 +62,9 @@ class _RSuperellipseOctant {
     final Offset pointM = Offset(a - g, a - g);
     final Offset pointJ = Offset(xJ, yJ);
     final Offset circleCenter = radius == 0 ? pointM : _findCircleCenter(pointJ, pointM, R);
-    final double circleMaxAngle =
-        radius == 0 ? 0 : _angleTo(pointM - circleCenter, pointJ - circleCenter);
+    final double circleMaxAngle = radius == 0
+        ? 0
+        : _angleTo(pointM - circleCenter, pointJ - circleCenter);
 
     return _RSuperellipseOctant._raw(
       offset: center,
