@@ -118,7 +118,7 @@ void testMain() {
       bottomRight: const Radius.circular(1.0),
     );
 
-    expect(rse.contains(const Offset(0, 0)), isTrue);
+    expect(rse.contains(Offset.zero), isTrue);
     expect(rse.contains(const Offset(-49.999, -49.999)), isFalse);
     expect(rse.contains(const Offset(-49.999, 49.999)), isFalse);
     expect(rse.contains(const Offset(49.999, 49.999)), isFalse);

@@ -5,7 +5,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:ui/src/engine.dart';
+import 'package:ui/src/engine.dart' show LazyPath;
 import 'package:ui/ui.dart' as ui;
 
 import '../color_filter.dart';
