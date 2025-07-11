@@ -51533,8 +51533,6 @@ ORIGIN: ../../../flutter/fml/platform/darwin/platform_version.h + ../../../flutt
 ORIGIN: ../../../flutter/fml/platform/darwin/platform_version.mm + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/fml/platform/darwin/scoped_nsautorelease_pool.cc + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/fml/platform/darwin/scoped_nsautorelease_pool.h + ../../../flutter/LICENSE
-ORIGIN: ../../../flutter/fml/platform/darwin/string_range_sanitization.h + ../../../flutter/LICENSE
-ORIGIN: ../../../flutter/fml/platform/darwin/string_range_sanitization.mm + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/fml/platform/fuchsia/log_interest_listener.cc + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/fml/platform/fuchsia/log_interest_listener.h + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/fml/platform/fuchsia/log_state.cc + ../../../flutter/LICENSE
@@ -53461,9 +53459,13 @@ ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/SemanticsObj
 ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/SemanticsObject.mm + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/SemanticsObjectTest.mm + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/SemanticsObjectTestMocks.h + ../../../flutter/LICENSE
+ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/SwiftTests-Bridging-Header.h + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/TextInputSemanticsObject.h + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/TextInputSemanticsObject.mm + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/UIPressProxy.swift + ../../../flutter/LICENSE
+ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/UITextInput+TextRange.swift + ../../../flutter/LICENSE
+ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/UITextInputEditingStateTest+Utils.swift + ../../../flutter/LICENSE
+ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/UITextInputEditingStateTests.swift + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/UIViewController+FlutterScreenAndSceneIfLoaded.h + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/UIViewController+FlutterScreenAndSceneIfLoaded.mm + ../../../flutter/LICENSE
 ORIGIN: ../../../flutter/shell/platform/darwin/ios/framework/Source/UIViewController_FlutterScreenAndSceneIfLoadedTest.mm + ../../../flutter/LICENSE
@@ -54605,8 +54607,6 @@ FILE: ../../../flutter/fml/platform/darwin/platform_version.h
 FILE: ../../../flutter/fml/platform/darwin/platform_version.mm
 FILE: ../../../flutter/fml/platform/darwin/scoped_nsautorelease_pool.cc
 FILE: ../../../flutter/fml/platform/darwin/scoped_nsautorelease_pool.h
-FILE: ../../../flutter/fml/platform/darwin/string_range_sanitization.h
-FILE: ../../../flutter/fml/platform/darwin/string_range_sanitization.mm
 FILE: ../../../flutter/fml/platform/fuchsia/log_interest_listener.cc
 FILE: ../../../flutter/fml/platform/fuchsia/log_interest_listener.h
 FILE: ../../../flutter/fml/platform/fuchsia/log_state.cc
@@ -56537,9 +56537,13 @@ FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/SemanticsObjec
 FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/SemanticsObject.mm
 FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/SemanticsObjectTest.mm
 FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/SemanticsObjectTestMocks.h
+FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/SwiftTests-Bridging-Header.h
 FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/TextInputSemanticsObject.h
 FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/TextInputSemanticsObject.mm
 FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/UIPressProxy.swift
+FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/UITextInput+TextRange.swift
+FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/UITextInputEditingStateTest+Utils.swift
+FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/UITextInputEditingStateTests.swift
 FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/UIViewController+FlutterScreenAndSceneIfLoaded.h
 FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/UIViewController+FlutterScreenAndSceneIfLoaded.mm
 FILE: ../../../flutter/shell/platform/darwin/ios/framework/Source/UIViewController_FlutterScreenAndSceneIfLoadedTest.mm
