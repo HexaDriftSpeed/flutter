@@ -913,6 +913,7 @@ class RRect extends _RRectLike<RRect> {
   );
 
   // RRect doesn't need uniformRadii for optimization for now.
+  @override
   bool get _uniformRadii => false;
 
   static const RRect zero = RRect._raw();

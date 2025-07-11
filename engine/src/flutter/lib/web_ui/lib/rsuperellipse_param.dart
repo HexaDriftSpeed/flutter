@@ -218,7 +218,7 @@ class _RSuperellipseOctant {
     }
 
     final double steps = ((n - kMinN) / kStep).clamp(0, kNumRecords - 1);
-    final int left = steps.floor().clamp(0, kNumRecords - 2).toInt();
+    final int left = steps.floor().clamp(0, kNumRecords - 2);
     final double frac = steps - left;
 
     return (
@@ -277,7 +277,7 @@ class _RSuperellipseOctant {
       steps = (ratio - kFirstMaxRatio) * kSecondStepInverse + kFirstNumRecords - 1;
     }
 
-    final int left = steps.floor().clamp(0, kNumRecords - 2).toInt();
+    final int left = steps.floor().clamp(0, kNumRecords - 2);
     final double frac = steps - left;
 
     final double n =
@@ -301,7 +301,7 @@ class _RSuperellipseQuadrant {
     final Size radii = Size(inRadii.x.abs(), inRadii.y.abs());
 
     final double normRadius = radii.shortestSide;
-    final Size forwardScale = normRadius == 0 ? Size(1, 1) : radii / normRadius;
+    final Size forwardScale = normRadius == 0 ? const Size(1, 1) : radii / normRadius;
     final Size normHalfSize = Size(
       cornerVector.dx.abs() / forwardScale.width,
       cornerVector.dy.abs() / forwardScale.height,
@@ -395,7 +395,7 @@ class _RSuperellipsePathBuilder {
     );
     final Offset start = Offset(0, height / 2);
     path.moveTo(start.dx, start.dy);
-    bottomRight.addToPath(p, reverse: false, extraScale: const Size(1, 1));
+    bottomRight.addToPath(p, reverse: false);
     bottomRight.addToPath(p, reverse: true, extraScale: const Size(1, -1));
     bottomRight.addToPath(p, reverse: false, extraScale: const Size(-1, -1));
     bottomRight.addToPath(p, reverse: true, extraScale: const Size(-1, 1));
@@ -476,7 +476,9 @@ class _RSuperellipseCacheKey {
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other)) return true;
+    if (identical(this, other)) {
+      return true;
+    }
     return other is _RSuperellipseCacheKey &&
         _widthInt == other._widthInt &&
         _heightInt == other._heightInt &&
@@ -502,17 +504,17 @@ class _RSuperellipseCacheKey {
 /// An LRU (Least Recently Used) cache that maps from normalized RSuperellipse
 /// to its path.
 class _RSuperellipseCache {
+  _RSuperellipseCache._({required this.capacity}) : assert(capacity > 0);
+
+  static final _RSuperellipseCache instance = _RSuperellipseCache._(capacity: kCapacity);
+
   // A rough estimate by that a typical screen should hardly contain more than
   // 20 RSuperellipses.
   static const int kCapacity = 50;
 
-  static late final _RSuperellipseCache instance = _RSuperellipseCache._(capacity: kCapacity);
+  final int capacity;
 
   final Map<_RSuperellipseCacheKey, Path> _cache = <_RSuperellipseCacheKey, Path>{};
-
-  _RSuperellipseCache._({required this.capacity}) : assert(capacity > 0);
-
-  final int capacity;
 
   /// Retrieves a Path from the cache.
   ///
