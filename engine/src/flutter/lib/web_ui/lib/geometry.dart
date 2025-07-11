@@ -896,7 +896,7 @@ class RRect extends _RRectLike<RRect> {
     required double brRadiusY,
     required double blRadiusX,
     required double blRadiusY,
-    required bool uniformRadii,  // Not used. See `get _uniformRadii`.
+    required bool uniformRadii, // Not used. See `get _uniformRadii`.
   }) => RRect._raw(
     top: top,
     left: left,
